@@ -1,0 +1,87 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        "CertificateArn": {
+            "Type": "String",
+            "Description": "Certificate arn for the thing"
+        },
+        "IoTThingName": {
+            "Type": "String",
+            "Description": "Name for the thing to be created",
+            "Default": "dna_rasp"
+        },
+        "RaspMac": {
+            "Type": "String",
+            "Description": "Raspberry Pi mac address (optional)",
+        },
+        "RaspIccid": {
+            "Type": "String",
+            "Description": "Sim card iccid that is connected to Rasp (optional)",
+        }
+    },
+    "Conditions": {
+        "HasMac": {"Fn::Not": [{"Fn::Equals": ["", {"Ref": "RaspMac"}]}]},
+        "HasIccid": {"Fn::Not": [{"Fn::Equals": ["", {"Ref": "RaspIccid"}]}]}
+    },
+    "Resources": {
+        "PolicyPrincipal": {
+            "Type": "AWS::IoT::PolicyPrincipalAttachment",
+            "Properties": {
+                "PolicyName": {
+                    "Ref": "ThingPolicy"
+                },
+                "Principal": {
+                    "Ref": "CertificateArn"
+                }
+            }
+        },
+        "ThingPolicy": {
+            "Type": "AWS::IoT::Policy",
+            "Properties": {
+                "PolicyName": "TestThingPolicy",
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "iot:Connect"
+                            ],
+                            "Resource": [
+                                { "Fn::Join" : [ "", [ "arn:aws:iot:", {"Ref" : "AWS::Region"}, ":", {"Ref" : "AWS::AccountId"}, ":thing/", {"Ref" : "Thing"} ] ] }
+                            ]
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "iot:Publish"
+                            ],
+                            "Resource": [
+                                "*"
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "ThingPrincipal": {
+   "Type": "AWS::IoT::ThingPrincipalAttachment",
+   "Properties": {
+      "Principal": {"Ref": "CertificateArn"},
+      "ThingName": {"Ref": "Thing"}
+    }
+},
+        "Thing": {
+            "Type": "AWS::IoT::Thing",
+            "Properties": {
+                "ThingName": {"Ref": "IoTThingName"},
+                "AttributePayload": {
+                    "Attributes": {
+                        "mac": {"Fn::If": ["HasMac", {"Ref": "RaspMac"}, {"Ref": "AWS::NoValue"}]},
+                        "iccid": {"Fn::If": ["HasIccid", {"Ref": "RaspIccid"}, {"Ref": "AWS::NoValue"}]}
+                    }
+                }
+            }
+        }
+    }
+}
