@@ -1,0 +1,260 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+
+    "Resources": {
+        "InvokeCrawlerLambdaPermission": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+                "FunctionName": {
+                    "Ref": "APIPollerLambda"
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "events.amazonaws.com",
+                "SourceArn": {
+                    "Fn::GetAtt": [
+                        "ScheduleRuleForAPIPoller",
+                        "Arn"
+                    ]
+                }
+            }
+        },
+        "APIPollerLambda": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Code": {
+                    "ZipFile": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "import base64 \n",
+                                "from urllib2 import Request, urlopen\n",
+                                "import urllib\n",
+                                "import json\n",
+                                "import boto3\n",
+                                "import botocore\n",
+                                "import datetime\n",
+                                "import time\n",
+                                "import os\n",
+                                "\n",
+                                "URL = 'https://restapi3.jasper.com/rws/api/v1/devices'\n",
+                                "\n",
+                                "def store_current_timestamp(dynamodb, ts):\n",
+                                "    table = dynamodb.Table(os.environ['dynamoTable'])\n",
+                                "    try:\n",
+                                "        table.put_item(\n",
+                                "            Item={'url': URL, 'lastScannedTime': ts}\n",
+                                "        )\n",
+                                "    except botocore.exceptions.ClientError as e:\n",
+                                "        print(e)\n",
+                                "    else:\n",
+                                "        print('all ok')\n",
+                                "\n",
+                                "def get_last_timestamp(dynamodb):\n",
+                                "    table = dynamodb.Table(os.environ['dynamoTable'])\n",
+                                "    try:\n",
+                                "        response = table.get_item(Key={'url': URL})\n",
+                                "    except botocore.exceptions.ClientError as e:\n",
+                                "        ts = datetime.datetime.strptime('2018-01-01', '%Y-%m-%d')\n",
+                                "        return ts\n",
+                                "    else:\n",
+                                "        ts = response['Item']['lastScannedTime']\n",
+                                "        return datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S+00:00')\n",
+                                "\n",
+                                "def create_crypted_apikey():\n",
+                                "    key = os.environ['apiKey']+':'+os.environ['username'].lower()\n",
+                                "    bkey = base64.b64encode(key)\n",
+                                "    return bkey\n",
+                                "\n",
+                                "def call_api(url, key):\n",
+                                "    q = Request(url)\n",
+                                "    q.add_header('Authorization', 'Basic {}'.format(key))\n",
+                                "    q.add_header('Accept', 'application/json')\n",
+                                "    res = urlopen(q).read()\n",
+                                "    return json.loads(res)\n",
+                                "\n",
+                                "def write_log_stream(epoch, message, log, sequencetoken):\n",
+                                "    response = log.put_log_events(\n",
+                                "        logGroupName=os.environ['logGroup'],\n",
+                                "        logStreamName=os.environ['logStream'],\n",
+                                "        logEvents=[\n",
+                                "            {\n",
+                                "                'timestamp': epoch,\n",
+                                "                'message': json.dumps(message)\n",
+                                "            }\n",
+                                "        ],\n",
+                                "        sequenceToken=sequencetoken\n",
+                                "    )\n",
+                                "    return response['nextSequenceToken']\n",
+                                "\n",
+                                "def get_stream_token(log):\n",
+                                "    response = log.describe_log_streams(\n",
+                                "        logGroupName=os.environ['logGroup'],\n",
+                                "        logStreamNamePrefix=os.environ['logStream']\n",
+                                "    )\n",
+                                "    return response['logStreams'][0]['uploadSequenceToken']\n",
+                                "\n",
+                                "def lambda_handler(event, context):\n",
+                                "    now = datetime.datetime.now()\n",
+                                "    dynamodb = boto3.resource('dynamodb', region_name='eu-west-1')\n",
+                                "    log = boto3.client('logs', region_name='eu-west-1')\n",
+                                "    ts = get_last_timestamp(dynamodb)\n",
+                                "    bkey = create_crypted_apikey()\n",
+                                "    url = '{}?{}'.format(URL, urllib.urlencode({'modifiedSince': ts.strftime('%Y-%m-%dT%H:%M:%S+00:00')}))\n",
+                                "    resp = call_api(url, bkey)\n",
+                                "    if len(resp['devices']) != 0:\n",
+                                "        epoch = int(round(time.time() * 1000))\n",
+                                "        token = get_stream_token(log)\n",
+                                "        for device in resp['devices']:\n",
+                                "            print(token)\n",
+                                "            token = write_log_stream(epoch, device, log, token)\n",
+                                "    else:\n",
+                                "        print('Nothing to log')\n",
+                                "    store_current_timestamp(dynamodb, now.strftime('%Y-%m-%dT%H:%M:%S+00:00'))\n"
+                            ]
+                        ]
+                    }
+                },
+                "Description": "Poll for changes in DNA Control Center",
+                "FunctionName": "ApiPoller",
+                "Handler": "index.lambda_handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecutionRole",
+                        "Arn"
+                    ]
+                },
+                "Runtime": "python2.7",
+                "Environment": {
+                    "Variables": {
+                        "apiKey":{"Ref": "ApiKey"}, 
+                        "username": {"Ref": "ApiUsername"},
+                        "logGroup": {"Ref": "DNACCLogGroup"},
+                        "logStream": {"Ref": "DNACCLogStream"},
+                        "dynamoTable": {"Ref": "LogControlTable"}
+                    }    
+                }
+            }
+        },
+        "LambdaExecutionRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Policies": [
+                    {
+                        "PolicyName": "IoTAttributeLookupPolicy",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "dynamodb:GetItem",
+                                        "dynamodb:ListTables",
+                                        "dynamodb:PutItem",
+                                        "dynamodb:UpdateItem"
+                                    ],
+                                    "Resource": {"Fn::GetAtt": [
+                                        "LogControlTable",
+                                        "Arn"
+                                    ] }
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "logs:DescribeLogStreams"
+                                    ],
+                                    "Resource": [
+                                        "arn:aws:logs:*:*:*"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+                ]
+            }
+        },
+        "ScheduleRuleForAPIPoller": {
+            "Type": "AWS::Events::Rule",
+            "Properties": {
+                "Description": "Schedule Rule for API reading",
+                "ScheduleExpression": "rate(10 minutes)",
+                "State": "ENABLED",
+                "Targets": [ {
+                    "Arn": { "Fn::GetAtt": ["APIPollerLambda", "Arn"] },
+                    "Id": "TargetFunctionV1"
+                } ]
+            },
+            "DependsOn": [
+                "APIPollerLambda"
+            ]
+        },
+        "LogControlTable": {
+          "Type": "AWS::DynamoDB::Table",
+          "Properties": {
+            "TableName": "api_poller_status",
+            "AttributeDefinitions": [
+                {
+                    "AttributeName": "url",
+                    "AttributeType": "S"
+                }
+            ],
+            "KeySchema": [
+                {
+                    "KeyType": "HASH",
+                    "AttributeName": "url"
+                }
+            ],
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 2,
+              "WriteCapacityUnits": 2
+            }
+          }
+        },
+        "DNACCLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+                "LogGroupName": "DNAControlCenterLogGroup",
+                "RetentionInDays": 60
+            }
+        },
+        "DNACCLogStream": {
+            "Type": "AWS::Logs::LogStream",
+            "Properties": {
+                "LogGroupName": {
+                    "Ref": "DNACCLogGroup"
+                },
+                "LogStreamName" : "DeviceStatusLog"
+            }
+        }
+    },
+    "Parameters": {
+        "ApiKey": {
+            "Type": "String",
+            "Description": "DNA Control Center API key"
+        },
+        "ApiUsername": {
+            "Type": "String",
+            "Description": "Your username in the DNA Control Center"
+        }
+    },
+    "Outputs": {
+    }
+}
