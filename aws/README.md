@@ -259,12 +259,12 @@ Create shared secret in DNA Control Center. Admin > Account Profile > Edit butto
 
 Build the API endpoint and Lambda by creating the following stack. This stack creates a API Gateway that has lambda attached to it that handles the incoming messages to CloudWatch for monitoring.
 
-First, we create a S3 bucket for the source codes. Give your bucket unique name, for example yourname-jasper-codes
+First, we create a S3 bucket for the source codes. Give your bucket unique name, for example <yourname>-controlcenter-codes
 ``` 
 aws cloudformation deploy --template-file api-gateway/cloudformation/source_code_bucket.json --stack-name DnaSourceCodeBucket --parameter-overrides BucketName=<NameYourBucket>
 ```
 
-Package the lambda.zip that contains the lambda function that handles the incoming messages to your CloudFormation by running the following command
+Package the proxy_bundle.zip that contains the lambda function that handles the incoming messages to your CloudFormation by running the following command
 ```
 aws cloudformation package --template-file api-gateway/cloudformation/infra-swagger.yaml --s3-bucket <NameYourBucket> --output-template-file api-gateway/cloudformation/packaged-template.yaml
 ```
@@ -311,17 +311,20 @@ If you want to create new endpoints and handle different types, you need to modi
 3. Build python code with pybuilder that generates zip file
 4. Run the cloudformation update
 
-Code resides in the folder api-gateway/src/main/python/proxy_handler.py. 
-To build the source code run the following commands
+Code resides in the folder api-gateway/src/proxy_handler.py. 
+To create new lambda package after modification on the proxy_handler.py do the following in the api-gateway folder
 ```
 pip install virtualenv
-python -m virtualenv -p python venv
+virtualenv -p /usr/bin/python2.7 env
 source venv/bin/activate
-pip install pybuilder
-pyb lambda package
+pip install -r requirements.txt
+cp -rf src dist
+cp -rf env/lib/python2.7/site-packages/* dist
+cd dist
+zip -r ../proxy_bundle.zip .
 ```
 
-Now you should have a new lambda.zip file that can be uploaded and deployed. If you have already deployed the lambda, you can leave out the parameters-overrides in the later command. 
+Now you should have a new proxy_budle.zip file that can be uploaded and deployed. If you have already deployed the lambda, you can leave out the parameters-overrides in the later command. 
 ```
 aws cloudformation package --template-file api-gateway/cloudformation/infra-swagger.yaml --s3-bucket <NameYourBucket> --output-template-file api-gateway/cloudformation/packaged-template.yaml
 

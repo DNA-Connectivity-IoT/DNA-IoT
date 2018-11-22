@@ -1,0 +1,169 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Cloudformation that contains a API Gateway and a lambda that handles
+  incoming trafic from Jasper.
+Resources:
+
+  JasperLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Code:
+        ../lambda.zip
+      Description: Jasper data handler
+      FunctionName: JasperProxy
+      Handler: proxy_lambda.handler
+      Role: !GetAtt 
+        - LambdaExecutionRole
+        - Arn
+      Runtime: python3.6
+      Environment:
+        Variables:
+          api_key: !Ref SecretKey
+
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+  
+  JasperApi:
+    Type: 'AWS::ApiGateway::RestApi'
+    Properties:
+      Name: Jasper API
+      Description: API used for ingest Jasper messages to AWS
+      FailOnWarnings: true
+      Body:
+        swagger: '2.0'
+        info:
+          version: '2016-08-17T18:08:34Z'
+          title: Jasper API
+        basePath: /api
+        schemes:
+          - https
+        paths:
+          '/{proxy+}':
+            x-amazon-apigateway-any-method:
+              produces:
+                - application/json
+              parameters:
+                - name: proxy
+                  in: path
+                  required: true
+                  type: string
+              responses: {}
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri: !Join 
+                  - ''
+                  - - 'arn:aws:apigateway:'
+                    - !Ref 'AWS::Region'
+                    - ':lambda:path/2015-03-31/functions/'
+                    - !GetAtt 
+                      - JasperLambda
+                      - Arn
+                    - /invocations
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                cacheNamespace: roq9wj
+                cacheKeyParameters:
+                  - method.request.path.proxy
+                type: aws_proxy
+
+  LambdaPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:invokeFunction'
+      FunctionName: !GetAtt 
+        - JasperLambda
+        - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Join 
+        - ''
+        - - 'arn:aws:execute-api:'
+          - !Ref 'AWS::Region'
+          - ':'
+          - !Ref 'AWS::AccountId'
+          - ':'
+          - !Ref JasperApi
+          - /*
+
+  ApiGatewayCloudWatchLogsRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: ApiGatewayLogsPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:DescribeLogGroups'
+                  - 'logs:DescribeLogStreams'
+                  - 'logs:PutLogEvents'
+                  - 'logs:GetLogEvents'
+                  - 'logs:FilterLogEvents'
+                Resource: '*'
+
+  ApiGatewayAccount:
+    Type: 'AWS::ApiGateway::Account'
+    Properties:
+      CloudWatchRoleArn: !GetAtt 
+        - ApiGatewayCloudWatchLogsRole
+        - Arn
+
+  GreetingApiStage:
+    DependsOn:
+      - ApiGatewayAccount
+    Type: 'AWS::ApiGateway::Stage'
+    Properties:
+      DeploymentId: !Ref ApiDeployment
+      MethodSettings:
+        - DataTraceEnabled: true
+          HttpMethod: '*'
+          LoggingLevel: INFO
+          ResourcePath: /*
+      RestApiId: !Ref JasperApi
+      StageName: api
+
+  ApiDeployment:
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref JasperApi
+
+Outputs:
+  RootUrl:
+    Description: Root URL of the API gateway
+    Value: !Join 
+      - ''
+      - - 'https://'
+        - !Ref JasperApi
+        - .execute-api.
+        - !Ref 'AWS::Region'
+        - .amazonaws.com
+
+Parameters:
+  SecretKey:
+    Type: String
+    Description: Jasper secret key
