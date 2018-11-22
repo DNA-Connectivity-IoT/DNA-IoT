@@ -1,0 +1,214 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Resources": {
+        "ElasticsearchDomain": {
+            "Type": "AWS::Elasticsearch::Domain",
+            "Properties": {
+                "DomainName": {"Ref": "domainName"},
+                "ElasticsearchVersion": "6.3",
+                "ElasticsearchClusterConfig": {
+                    "InstanceCount": "1",
+                    "InstanceType": {"Ref": "elasticserachInstanceType"}
+                },
+                "EBSOptions": {
+                    "EBSEnabled": true,
+                    "Iops": 0,
+                    "VolumeSize": 10,
+                    "VolumeType": "standard"
+                },
+                "AccessPolicies": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                          "Effect": "Allow",
+                          "Principal": 
+                          {
+                            "AWS": [{ "Fn::Sub": [ "arn:aws:iam::${accountId}:role/dna_rasp_role", { "accountId": {"Ref" : "AWS::AccountId" }} ]}]
+                          },
+                          "Action": "es:ESHttpPut",
+                          "Resource": { "Fn::Sub": [ "arn:aws:es:eu-west-1:${accountId}:domain/${domain}/*", { "accountId": {"Ref" : "AWS::AccountId" }, "domain": {"Ref": "domainName"}} ]}
+                        }
+                    ]
+                },
+                "AdvancedOptions": {
+                    "rest.action.multi.allow_explicit_index": "true"
+                }
+            }
+        },
+        "IoTRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version" : "2012-10-17",
+               "Statement": [ {
+                  "Effect": "Allow",
+                  "Principal": {
+                     "Service": [ "iot.amazonaws.com" ]
+                  },
+                  "Action": [ "sts:AssumeRole" ]
+               } ]
+                },
+                "RoleName": "dna_rasp_role",
+                "Policies": [ {
+               "PolicyName": "dna_rasp_es_policy",
+               "PolicyDocument": {
+                  "Version" : "2012-10-17",
+                  "Statement": [ {
+                     "Effect": "Allow",
+                     "Action": "es:ESHttpPut",
+                     "Resource": {"Fn::GetAtt": ["ElasticsearchDomain", "DomainArn"]}
+                  } ]
+               }
+               } ]
+            }
+        },
+        "IoTTopicRule": {
+            "Type": "AWS::IoT::TopicRule",
+            "DependsOn" : "IoTParameterLambda",
+            "Properties": {
+                "RuleName": "dna_rasp_topic_role",
+                "TopicRulePayload": {
+                    "Sql": { "Fn::Join": ["", [
+                        "SELECT * , clientId() as cid, ",
+                        "aws_lambda(\"",
+                        {"Fn::GetAtt": ["IoTParameterLambda", "Arn"]},
+                        "\", {\"clientId\": clientId(), \"iccid\": iccid}).iccid ",
+                        " as iccid FROM 'dna_rasp/'"]]
+                    },
+                    "RuleDisabled": false,
+                    "Actions": [
+                        {
+                            "Elasticsearch": {
+                                "RoleArn": { "Fn::GetAtt" : ["IoTRole", "Arn"] },
+                                "Endpoint": { "Fn::Join" : [ "", [ "https://" , {
+                                    "Fn::GetAtt": [
+                                        "ElasticsearchDomain",
+                                        "DomainEndpoint"]},  
+                                "/*"] ]},
+                                "Index": "dna_rasp",
+                                "Type": "temphum",
+                                "Id": "${newuuid()}"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "IoTParameterLambda": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Code": {
+                    "ZipFile": { 
+                        "Fn::Join": ["", [
+                            "import boto3 \n",
+                            "def lambda_handler(event, context):\n",
+                            "    if 'iccid' not in event or event['iccid'] is None:\n",
+                            "        client = boto3.client('iot')\n",
+                            "        response = client.describe_thing( thingName=event['clientId'] )\n",
+                            "        if 'iccid' in response['attributes']:\n",
+                            "            return { 'iccid': response['attributes']['iccid'] }\n",
+                            "        else:\n",
+                            "            return { 'iccid': '' }\n",
+                            "    else:\n",
+                            "        return { 'iccid': event['iccid'] }\n"
+                        ]]
+                    }
+                },
+                "Description": "IoT Thing parameter checker",
+                "FunctionName": "IoTParameterLookup",
+                "Handler": "index.lambda_handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecutionRole",
+                        "Arn"
+                    ]
+                },
+                "Runtime": "python2.7"
+            }
+        },
+        "LambdaPermission": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+                "Action": "lambda:invokeFunction",
+                "FunctionName": {
+                    "Fn::GetAtt": [
+                        "IoTParameterLambda",
+                        "Arn"
+                    ]
+                },
+                "Principal": "iot.amazonaws.com",
+                "SourceArn":  {"Fn::GetAtt": ["IoTTopicRule", "Arn"]}
+            }
+        },
+        "LambdaExecutionRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Policies": [ {
+                        "PolicyName": "IoTAttributeLookupPolicy",
+                        "PolicyDocument": {
+                            "Version" : "2012-10-17",
+                            "Statement": [ {
+                              "Effect": "Allow",
+                              "Action": [
+                                  "iot:DescribeThing",
+                                  "iot:ListThings"
+                              ],
+                              "Resource": "*"
+                            } ]
+                        }
+                  }
+                ],
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+                ]
+            },
+        }
+    },
+    "Parameters": {
+        "elasticserachInstanceType": {
+            "Type": "String",
+            "Description": "Size of the instance in elasticsearch cluster",
+            "Default": "t2.medium.elasticsearch"
+        },
+        "myIpAddress": {
+            "Type": "String",
+            "Description": "Your ip address to be opened for elasticsearch"
+        },
+        "domainName": {
+            "Type": "String",
+            "Description": "Elasticserach domain name",
+            "Default": "rasp"
+        }
+
+    },
+    "Outputs": {
+        "ElasticsearchDomain": {
+            "Description": "Elasticserach domain endpoint",
+            "Value": {
+                "Fn::GetAtt": ["ElasticsearchDomain", "DomainEndpoint"]
+            }
+        },
+        "KibanaEndpoint": {
+            "Description": "Kibana endpoint",
+            "Value": {"Fn::Join": [ "", [{
+                "Fn::GetAtt": ["ElasticsearchDomain", "DomainEndpoint"]
+            }, "/_plugin/kibana/"]] }
+        }
+    }
+}

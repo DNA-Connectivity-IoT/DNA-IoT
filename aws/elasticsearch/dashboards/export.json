@@ -1,0 +1,18 @@
+[
+  {
+    "_id": "f9d8b8b0-d5ef-11e8-83cd-a12f3c47de7c",
+    "_type": "dashboard",
+    "_source": {
+      "title": "TempHumDash",
+      "hits": 0,
+      "description": "",
+      "panelsJSON": "[{\"panelIndex\":\"3\",\"gridData\":{\"x\":0,\"y\":0,\"w\":48,\"h\":7,\"i\":\"3\"},\"embeddableConfig\":{},\"id\":\"d02496d0-e3fd-11e8-bd20-2797c89add92\",\"type\":\"visualization\",\"version\":\"6.3.1\"},{\"panelIndex\":\"4\",\"gridData\":{\"x\":0,\"y\":7,\"w\":24,\"h\":15,\"i\":\"4\"},\"version\":\"6.3.1\",\"type\":\"visualization\",\"id\":\"52e788d0-ec04-11e8-9d5e-f1653c1d0fbe\",\"embeddableConfig\":{}},{\"gridData\":{\"w\":24,\"h\":15,\"x\":24,\"y\":7,\"i\":\"5\"},\"version\":\"6.3.1\",\"panelIndex\":\"5\",\"type\":\"visualization\",\"id\":\"70255800-ec04-11e8-9d5e-f1653c1d0fbe\",\"embeddableConfig\":{}}]",
+      "optionsJSON": "{\"darkTheme\":false,\"hidePanelTitles\":false,\"useMargins\":true}",
+      "version": 1,
+      "timeRestore": false,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"query\":{\"language\":\"lucene\",\"query\":\"\"},\"filter\":[{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"controlledBy\":\"1541753960543\",\"disabled\":false,\"index\":\"aabb1ae0-e3fd-11e8-bd20-2797c89add92\",\"key\":\"iccid.keyword\",\"negate\":false,\"params\":{\"query\":\"86789456\",\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"86789456\"},\"query\":{\"match\":{\"iccid.keyword\":{\"query\":\"86789456\",\"type\":\"phrase\"}}}}],\"highlightAll\":true,\"version\":true}"
+      }
+    }
+  }
+]
