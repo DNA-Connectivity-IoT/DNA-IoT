@@ -1,7 +1,7 @@
 {
     "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-        
+
     "parameters": {
         "functionappplan_name": {
             "type": "string"
@@ -31,7 +31,7 @@
             "kind": "functionapp",
             "name": "[parameters('functionappplan_name')]",
             "apiVersion": "2016-09-01",
-            "location": "[parameters('functionappservice_location')]",
+            "location": "[parameters('location')]",
             "scale": null,
             "properties": {
                 "name": "[parameters('functionappplan_name')]",
@@ -50,7 +50,7 @@
             "kind": "functionapp",
             "name": "[parameters('functionappservice_name')]",
             "apiVersion": "2016-08-01",
-            "location": "[parameters('functionappservice_location')]",
+            "location": "[parameters('location')]",
             "scale": null,
             "properties": {
                 "enabled": true,

@@ -20,8 +20,45 @@ In order to build demo for yourselves you need the following
 - Basic knowledge of python
 - Sensor is optional (in demo we used DHT22 temperature sensor)
 
-## Create IoT Hub
+## Azure Environment
 
+### Create Resource group
+```
+az group create -l westeurope -n IoT-Resource-Group
+```
+### Create IoT hub
+In iot-hub -folder fill in values for properties.json
+
+Run this in Azure CLI 
+```
+az group deployment create 
+--name iothubdeployment
+--resource-group IoT-Resource-Group
+--template-file template.json
+--parameters @parameters.json
+```
+### Create Storage Account
+In storage -folder fill in values for properties.json
+
+Run this in Azure CLI
+```
+az group deployment create 
+--name storagedeployment
+--resource-group IoT-Resource-Group
+--template-file template.json
+--parameters @parameters.json
+```
+### Create Function App
+In functions -folder fill in values for properties.json
+
+Run this in Azure CLI
+```
+az group deployment create 
+--name functionsdeployment
+--resource-group IoT-Resource-Group
+--template-file template.json
+--parameters @parameters.json
+```
 ## Register a thing
 
 Run this in Azure CLI
