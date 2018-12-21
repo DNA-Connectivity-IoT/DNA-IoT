@@ -59,12 +59,31 @@ az group deployment create
 --template-file template.json
 --parameters @parameters.json
 ```
+
+Function code is implemented with Nodejs. Create new HTTP-trigger function, install azure-iothub -npm package and get index.js from integration -folder
+
+Function can then be called with HTTP POST. Function takes request body and set it to device twin desired properties. Request body should be in this from:
+
+```
+{
+    ICCID: '1234',
+    Offline: false,
+    DataUsage: 12
+}
+```
+Where ICCID is the ICCID of device to be updated. Offline and Data usage will be set to desired properties.
+
+
 ## Register a thing
 
 Run this in Azure CLI
 ```
 az extension add --name azure-cli-iot-ext
 az iot hub device-identity create --hub-name DNAControlCenterHub --device-id DnaRasp
+```
+Update ICCID to Device twin properties
+```
+az iot hub device-twin update --device-id DnaRasp --hub-name DNAControlCenterHub --set tags.ICCID=<ICCID>
 ```
 
 Get the endpoint to where the data is send to 
@@ -76,10 +95,27 @@ You can then monitorin events coming to IoT Hub with running the following comma
 ```
 az iot hub monitor-events --device-id DnaRasp --hub-name DNAControlCenterHub
 ```
+## Raspberry Pi gateway nodejs 
 
-## Raspberry Pi gateway
+this setup assumes that you have nodejs installed in your Raspberry Pi. Nodejs implementation does not yet have any sensor spesific code. The example sends generated patch with ICCID and DataUsage from device twin properties.
+
+Install azure-iothub -npm package
+
+```
+npm install azure-iothub
+```
+Get index.js file from gateway_nodejs -folder and run it with
+
+```
+node index.js
+```
+
+Gateway starts listening to device twin updates and sends messages to IoT-hub every 2 seconds
+
+## Raspberry Pi gateway python
 
 This demo assumes that you have set up the Raspberry Pi with the instructions found from Raspberry Pi webpage. 
+Python code does not yet have device twin property updates
 
 Transfer the gateway folder to Raspberry Pi using scp.
 ``` 
