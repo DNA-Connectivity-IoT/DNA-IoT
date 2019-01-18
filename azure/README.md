@@ -17,10 +17,17 @@ In order to build demo for yourselves you need the following
 - Git
 - Gateway device (in demo Raspberry pi 3 model B+ is used)
 - DNA connectivity
-- Basic knowledge of python
-- Sensor is optional (in demo we used DHT22 temperature sensor)
+- Basic knowledge of nodejs
+- Sensor is optional (in demo we use Ruuvitags https://ruuvi.com/ruuvitag-specs/)
 
 ## Azure Environment
+
+Azure setup contains four components
+- Azure IoT Hub
+- Azure Function app
+- Azure Time series insights
+
+Raspberry pi is registered to IoT hub as IoT device. Azure function is used as integration between Jasper and IoT hub. Function parses message sent by Jasper via functions HTTP trigger. Function is able to parse Past24HDataUsage and NoConnection -messages. From Past24HDataUsage-message function parses the datausage and timestamp and sets them to device twin. From NoConnection-message function sets noConnectionTimestamp to device twin. Device listens data from ruuvitags and sends that data with datausage and noConnectionTimestamp to IoT hub. Time series insights is used to visualize data from device.
 
 ### Create Resource group
 ```
@@ -60,19 +67,9 @@ az group deployment create
 --parameters @parameters.json
 ```
 
-Function code is implemented with Nodejs. Create new HTTP-trigger function, install azure-iothub -npm package and get index.js from integration -folder
+Function code is implemented with Nodejs. Create new HTTP-trigger function, install azure-iothub, crypto-js and xml2js -npm packages and get index.js from integration -folder
 
-Function can then be called with HTTP POST. Function takes request body and set it to device twin desired properties. Request body should be in this from:
-
-```
-{
-    ICCID: '1234',
-    Offline: false,
-    DataUsage: 12
-}
-```
-Where ICCID is the ICCID of device to be updated. Offline and Data usage will be set to desired properties.
-
+Function can then be called with HTTP POST. Function parses request body that Jasper sends and parses NoConnection-data and Past24HDataUsage-data and sets them to device twin desired properties
 
 ## Register a thing
 
@@ -83,7 +80,7 @@ az iot hub device-identity create --hub-name DNAControlCenterHub --device-id Dna
 ```
 Update ICCID to Device twin properties
 ```
-az iot hub device-twin update --device-id DnaRasp --hub-name DNAControlCenterHub --set tags.ICCID=<ICCID>
+az iot hub device-twin update --device-id DnaRasp --hub-name DNAControlCenterHub --set tags='{"ICCID":"<ICCID>"}'
 ```
 
 Get the endpoint to where the data is send to 
@@ -97,20 +94,38 @@ az iot hub monitor-events --device-id DnaRasp --hub-name DNAControlCenterHub
 ```
 ## Raspberry Pi gateway nodejs 
 
-this setup assumes that you have nodejs installed in your Raspberry Pi. Nodejs implementation does not yet have any sensor spesific code. The example sends generated patch with ICCID and DataUsage from device twin properties.
+This setup assumes that you have nodejs installed in your Raspberry Pi. Nodejs implementation has reader for ruuvitag sensors. 
 
-Install azure-iothub -npm package
+Raspberry is listening to ruuvitags and sends data collected to Azure IoT-hub. Code also updates data usage and offline data to device properties and includes them to every sent message.
+
+Install azure-iothub and node-ruuvitag -npm packages
 
 ```
 npm install azure-iothub
+npm install node-ruuvitag
 ```
-Get index.js file from gateway_nodejs -folder and run it with
+Get index.js and ruuvi.js files from gateway_nodejs -folder and run index.js
 
 ```
 node index.js
 ```
 
-Gateway starts listening to device twin updates and sends messages to IoT-hub every 2 seconds
+Gateway starts listening to device twin updates and sends messages to IoT-hub every 5 seconds
+
+## Time series insights 
+
+TSI can be used to visualize data from device
+
+In tsi -folder fill in values for properties.json
+
+Run this in Azure CLI
+```
+az group deployment create 
+--name tsideployment
+--resource-group IoT-Resource-Group
+--template-file template.json
+--parameters @parameters.json
+```
 
 ## Raspberry Pi gateway python
 

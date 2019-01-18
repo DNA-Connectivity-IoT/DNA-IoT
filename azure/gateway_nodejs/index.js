@@ -3,11 +3,9 @@
 var Client = require('azure-iot-device').Client;
 var Protocol = require('azure-iot-device-mqtt').Mqtt;
 var Message = require('azure-iot-device').Message;
-var _ = require('lodash');
 var ruuvi = require('./ruuvi.js')
 
-//var connectionString = '<IoT hub connection string>';
-var connectionString = 'HostName=DNAControlCenterHub.azure-devices.net;DeviceId=Simulator;SharedAccessKey=dIjQhx/ArSHi79inDfZ24iS3iQbemAI486OP3LzTSRY='
+var connectionString = '<IoT hub connection string>';
 
 var client = Client.fromConnectionString(connectionString, Protocol);
 
