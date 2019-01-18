@@ -1,0 +1,15 @@
+applications:
+- memory: 512M
+  services:
+  - sample-iotplatform
+  - sample-node-red-cloudantNoSQLDB
+  env:
+    NODE_RED_STORAGE_NAME: sample-node-red-cloudantNoSQLDB
+    IOTPLATFORM_NAME: sample-iotplatform
+declared-services:
+  sample-iotplatform:
+    label: iotf-service
+    plan: iotf-service-free
+  sample-node-red-cloudantNoSQLDB:
+    label: cloudantNoSQLDB
+    plan: Lite

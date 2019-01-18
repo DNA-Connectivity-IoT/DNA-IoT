@@ -1,0 +1,1060 @@
+{
+  "_id": "DNADemo/flow",
+  "_rev": "318-eb744197db2d9f712ee5b09ad4d628d9",
+  "flow": [
+    {
+      "id": "ada6b472.82df08",
+      "type": "tab",
+      "label": "Rules",
+      "disabled": false,
+      "info": ""
+    },
+    {
+      "id": "cd0ce323.3bdcd",
+      "type": "tab",
+      "label": "UI",
+      "disabled": false,
+      "info": ""
+    },
+    {
+      "id": "8996c3c2.f611",
+      "type": "tab",
+      "label": "Extras",
+      "disabled": false,
+      "info": ""
+    },
+    {
+      "id": "366297eb.cd8948",
+      "type": "twilio-api",
+      "z": "",
+      "sid": "ACca915c89cf9aec3b25928aed06be7a48",
+      "from": "358753267880",
+      "name": ""
+    },
+    {
+      "id": "90e5b2f2.f1953",
+      "type": "ui_tab",
+      "z": "",
+      "name": "Sensor values",
+      "icon": "dashboard",
+      "order": 1
+    },
+    {
+      "id": "82ae8100.77a39",
+      "type": "ui_group",
+      "z": "",
+      "name": "Default",
+      "tab": "90e5b2f2.f1953",
+      "disp": true,
+      "width": "6",
+      "collapse": false
+    },
+    {
+      "id": "34a6bedb.17bbb2",
+      "type": "ui_base",
+      "theme": {
+        "name": "theme-light",
+        "lightTheme": {
+          "default": "#0094CE",
+          "baseColor": "#0094CE",
+          "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+          "edited": true,
+          "reset": false
+        },
+        "darkTheme": {
+          "default": "#097479",
+          "baseColor": "#097479",
+          "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+          "edited": false
+        },
+        "customTheme": {
+          "name": "Untitled Theme 1",
+          "default": "#4B7930",
+          "baseColor": "#4B7930",
+          "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+        },
+        "themeState": {
+          "base-color": {
+            "default": "#0094CE",
+            "value": "#0094CE",
+            "edited": false
+          },
+          "page-titlebar-backgroundColor": {
+            "value": "#0094CE",
+            "edited": false
+          },
+          "page-backgroundColor": {
+            "value": "#fafafa",
+            "edited": false
+          },
+          "page-sidebar-backgroundColor": {
+            "value": "#ffffff",
+            "edited": false
+          },
+          "group-textColor": {
+            "value": "#1bbfff",
+            "edited": false
+          },
+          "group-borderColor": {
+            "value": "#ffffff",
+            "edited": false
+          },
+          "group-backgroundColor": {
+            "value": "#ffffff",
+            "edited": false
+          },
+          "widget-textColor": {
+            "value": "#111111",
+            "edited": false
+          },
+          "widget-backgroundColor": {
+            "value": "#0094ce",
+            "edited": false
+          },
+          "widget-borderColor": {
+            "value": "#ffffff",
+            "edited": false
+          },
+          "base-font": {
+            "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+          }
+        }
+      },
+      "site": {
+        "name": "Node-RED Dashboard",
+        "hideToolbar": "false",
+        "allowSwipe": "false",
+        "allowTempTheme": "true",
+        "dateFormat": "DD/MM/YYYY",
+        "sizes": {
+          "sx": 48,
+          "sy": 48,
+          "gx": 6,
+          "gy": 6,
+          "cx": 6,
+          "cy": 6,
+          "px": 0,
+          "py": 0
+        }
+      }
+    },
+    {
+      "id": "aced849a.dae758",
+      "type": "ui_tab",
+      "z": "",
+      "name": "Alerts",
+      "icon": "dashboard",
+      "order": 2
+    },
+    {
+      "id": "229c5759.b1c398",
+      "type": "ui_group",
+      "name": "Group 1",
+      "tab": "aced849a.dae758",
+      "order": 1,
+      "disp": true,
+      "width": 6
+    },
+    {
+      "id": "c67aa285.d6c56",
+      "type": "http in",
+      "z": "ada6b472.82df08",
+      "name": "",
+      "url": "/jasper_autoregister",
+      "method": "post",
+      "upload": false,
+      "swaggerDoc": "",
+      "x": 130,
+      "y": 120,
+      "wires": [
+        [
+          "70c5cfea.b8147",
+          "59a108ed.ea02c8"
+        ]
+      ]
+    },
+    {
+      "id": "1807d63c.4e0e6a",
+      "type": "function",
+      "z": "ada6b472.82df08",
+      "name": "CONFIGURE",
+      "func": "//https://docs.internetofthings.ibmcloud.com/apis/swagger/v0002/org-admin.html#!/Device_Bulk_Configuration/post_bulk_devices_add\nmsg.orgId = \"8wywfk\"; //Can be found in the right upper corner of IoT Platform\nmsg.typeId =\"GatewayType\";\n\nmsg.url = \"https://\"+msg.orgId+\".internetofthings.ibmcloud.com/api/v0002/device/types/\"+msg.typeId+\"/devices\";\n\nmsg.headers = {'Content-Type': 'application/json'};\n\nmsg.iccid = msg.payload.data.SimStateChange.iccid[0];\nmsg.deviceId = \"iccid_\"+msg.iccid;\n\nmsg.payload = {\n  \"deviceId\": msg.deviceId,\n  \"authToken\": \"test123\",\n  \"metadata\": {\"desc\":\"jasperdevice\"}\n    \n};\nreturn msg;",
+      "outputs": 1,
+      "noerr": 0,
+      "x": 350,
+      "y": 180,
+      "wires": [
+        [
+          "2dfa4811.f12108"
+        ]
+      ]
+    },
+    {
+      "id": "2dfa4811.f12108",
+      "type": "http request",
+      "z": "ada6b472.82df08",
+      "name": "[POST] Register new device",
+      "method": "POST",
+      "ret": "txt",
+      "url": "",
+      "tls": "",
+      "x": 560,
+      "y": 180,
+      "wires": [
+        [
+          "9fd855e1.f796b8"
+        ]
+      ]
+    },
+    {
+      "id": "70c5cfea.b8147",
+      "type": "http response",
+      "z": "ada6b472.82df08",
+      "name": "",
+      "statusCode": "",
+      "headers": {},
+      "x": 330,
+      "y": 100,
+      "wires": []
+    },
+    {
+      "id": "ae5ba42d.756528",
+      "type": "http request",
+      "z": "ada6b472.82df08",
+      "name": "[PUT] Jasper integration",
+      "method": "PUT",
+      "ret": "txt",
+      "url": "",
+      "tls": "",
+      "x": 550,
+      "y": 220,
+      "wires": [
+        [
+          "fea9a643.91ff18"
+        ]
+      ]
+    },
+    {
+      "id": "fea9a643.91ff18",
+      "type": "debug",
+      "z": "ada6b472.82df08",
+      "name": "",
+      "active": true,
+      "tosidebar": true,
+      "console": false,
+      "tostatus": false,
+      "complete": "true",
+      "x": 750,
+      "y": 220,
+      "wires": []
+    },
+    {
+      "id": "59a108ed.ea02c8",
+      "type": "xml",
+      "z": "ada6b472.82df08",
+      "name": "",
+      "property": "payload.data",
+      "attr": "",
+      "chr": "",
+      "x": 330,
+      "y": 140,
+      "wires": [
+        [
+          "1807d63c.4e0e6a"
+        ]
+      ]
+    },
+    {
+      "id": "535629a3.959c88",
+      "type": "comment",
+      "z": "ada6b472.82df08",
+      "name": "Part 1: Automatic registration of device in Watson IoT Platform (double click this node for information)",
+      "info": "This sub flow will do two API calls.\n1) First one will create a new device with a POST request\n2) Second API call will update recently created device with \n    Cisco Jasper integration \n\nThere is 'CONFIGURE' named node that has empty 'msg.orgId'.\nOrganization ID is found in the right upper corner in IBM Watson IoT Platform service.\nYou will find the service in IBM Cloud dashboard (www.bluemix.net)\n\nHTTP request nodes need authorization ([POST] Register new device, [PUT] Jasper integration)\n    API-keys and authentication tokens have to be generated in the IBM IoT Platform service:\n    1) Launch the service\n    2) Click APPS on the menu bar on the left side\n    3) Click Generate API Key, choose Standard Application\n    4) Save API key and Authentication token, they will be needed later.\n        Note: Authentication token will be shown only once and cannot be recovered.\n\n\nNote that device will be created with following credentials\nmsg.payload = {\n  \"deviceId\": \"iccid_{iccid}\"\",\n  \"authToken\": \"testi123\",\n  \"metadata\": {\"desc\":\"jasperdevice\"}\n    \n};\nCheck documentation for modification of device properties\n    https://console.bluemix.net/docs/services/IoT/reference/api.html#api_overview",
+      "x": 410,
+      "y": 60,
+      "wires": []
+    },
+    {
+      "id": "9fd855e1.f796b8",
+      "type": "function",
+      "z": "ada6b472.82df08",
+      "name": "CONFIGURE (optional)",
+      "func": "\nmsg.url = \"https://\"+msg.orgId+\".internetofthings.ibmcloud.com/api/v0002/device/types/\"+msg.typeId+\"/devices/\"+msg.deviceId;\n\nmsg.headers = {\n    'Content-Type': 'application/json'\n}\nmsg.payload = {\n  \"deviceInfo\": {\n    \"serialNumber\": \"string\",\n    \"manufacturer\": \"string\",\n    \"model\": \"string\",\n    \"deviceClass\": \"string\",\n    \"description\": \"string\",\n    \"fwVersion\": \"string\",\n    \"hwVersion\": \"string\",\n    \"descriptiveLocation\": \"string\"\n  },\n  \"metadata\": {},\n  \"status\": {\n    \"alert\": {\n      \"enabled\": true\n    }\n  },\n  \"extensions\": {\n      \"jasper\":{\n            \"iccid\": msg.iccid\n        }\n  }\n};\n\nreturn msg;",
+      "outputs": 1,
+      "noerr": 0,
+      "x": 320,
+      "y": 220,
+      "wires": [
+        [
+          "ae5ba42d.756528"
+        ]
+      ]
+    },
+    {
+      "id": "bb184e90.09735",
+      "type": "http in",
+      "z": "ada6b472.82df08",
+      "name": "",
+      "url": "/alert_hotandmoist",
+      "method": "post",
+      "upload": false,
+      "swaggerDoc": "",
+      "x": 170,
+      "y": 520,
+      "wires": [
+        [
+          "a2e85548.af1bb8",
+          "c6d2610.f85d5a"
+        ]
+      ]
+    },
+    {
+      "id": "de4f1538.9fa588",
+      "type": "comment",
+      "z": "ada6b472.82df08",
+      "name": "Part 3: IBM Cloud rule (double click this node for information)",
+      "info": "To create rule in Watson IoT Platform you have to:\n1) Create a device.\n    In this case device will be automatically registered when SIM-card is inserted.\n2) Send some data to Watson IoT Platform from device (will be needed in the next step)\n3) Create schema.\n    You don't have to defice schema manually if data has been sent to Watson IoT Platform.\n    To create a schema, follow recipe. Jump straight away to step 4:\n    https://developer.ibm.com/recipes/tutorials/using-rules-and-actions-with-ibm-watson-iot-platform-cloud-analytics/\n4) Create a rule:\n    Follow the recipe: jump to step 5.\n    Select any conditions.\n    In \"Creation Action Dialog\", select Node-RED as type.\n    On the next page URL will be: https://{domain}.mybluemix.net/alert\n5) Select the rule you created as active action.",
+      "x": 280,
+      "y": 460,
+      "wires": []
+    },
+    {
+      "id": "a2e85548.af1bb8",
+      "type": "json",
+      "z": "ada6b472.82df08",
+      "name": "",
+      "property": "payload.message",
+      "action": "",
+      "pretty": false,
+      "x": 390,
+      "y": 540,
+      "wires": [
+        [
+          "31730435.a87b7c",
+          "7c372253.5fc74c"
+        ]
+      ]
+    },
+    {
+      "id": "e1dacd5a.a70c3",
+      "type": "http in",
+      "z": "ada6b472.82df08",
+      "name": "",
+      "url": "/jasper_alertsim",
+      "method": "post",
+      "upload": false,
+      "swaggerDoc": "",
+      "x": 120,
+      "y": 340,
+      "wires": [
+        [
+          "2d128e91.8b8692",
+          "a3613c62.03781",
+          "ba5a2064.ed595"
+        ]
+      ]
+    },
+    {
+      "id": "2d128e91.8b8692",
+      "type": "debug",
+      "z": "ada6b472.82df08",
+      "name": "",
+      "active": true,
+      "tosidebar": true,
+      "console": false,
+      "tostatus": false,
+      "complete": "true",
+      "x": 330,
+      "y": 400,
+      "wires": []
+    },
+    {
+      "id": "a3613c62.03781",
+      "type": "http response",
+      "z": "ada6b472.82df08",
+      "name": "",
+      "statusCode": "",
+      "headers": {},
+      "x": 330,
+      "y": 320,
+      "wires": []
+    },
+    {
+      "id": "c6d2610.f85d5a",
+      "type": "http response",
+      "z": "ada6b472.82df08",
+      "name": "",
+      "statusCode": "",
+      "headers": {},
+      "x": 390,
+      "y": 500,
+      "wires": []
+    },
+    {
+      "id": "31730435.a87b7c",
+      "type": "debug",
+      "z": "ada6b472.82df08",
+      "name": "",
+      "active": true,
+      "tosidebar": true,
+      "console": false,
+      "tostatus": false,
+      "complete": "true",
+      "x": 530,
+      "y": 540,
+      "wires": []
+    },
+    {
+      "id": "20fee355.31b93c",
+      "type": "comment",
+      "z": "ada6b472.82df08",
+      "name": "Part 1: Jasper rules (double click this node for information)",
+      "info": "This is applications custom endpoints for receiving Jasper rules for \na) auto registering device in IoT Platform\nb) changing SIM-card to another device.\n\nTo set up Jasper rule:\n1) Log in to Jasper Control Centre\n2) Click automation\n3) Create new rule\n\nAuto register\n4a) In rule category list select: SIM Provisioning -> SIM State Change\n5b) Set 'When this happens...': If any SIM changes SIM State from 'Activation ready' to 'Activated'\n6b) Set 'Do this...': Push an API message to https://{domain}.mybluemix.net/jasper_autoregister\n\nSIM card to another device\n4b) In rule category list select: Security -> IMEI Change\n5b) Set 'Do this...': Push an API Message to https://{domain}.mybluemix.net/jasper_alertsim",
+      "x": 270,
+      "y": 20,
+      "wires": []
+    },
+    {
+      "id": "7c372253.5fc74c",
+      "type": "link out",
+      "z": "ada6b472.82df08",
+      "name": "Cloud rule",
+      "links": [
+        "de6df53.9eb4a08",
+        "84b40e03.83fe3"
+      ],
+      "x": 495,
+      "y": 500,
+      "wires": []
+    },
+    {
+      "id": "ba5a2064.ed595",
+      "type": "link out",
+      "z": "ada6b472.82df08",
+      "name": "JasperRule_SIM",
+      "links": [
+        "f3f450c2.437a",
+        "4786d00a.01983"
+      ],
+      "x": 295,
+      "y": 360,
+      "wires": []
+    },
+    {
+      "id": "4e179ab9.f6e814",
+      "type": "comment",
+      "z": "ada6b472.82df08",
+      "name": "Jump to UI",
+      "info": "",
+      "x": 375,
+      "y": 360,
+      "wires": []
+    },
+    {
+      "id": "6fad5502.7e413c",
+      "type": "comment",
+      "z": "ada6b472.82df08",
+      "name": "Jump to UI",
+      "info": "",
+      "x": 576,
+      "y": 500,
+      "wires": []
+    },
+    {
+      "id": "69d9e86d.3fe038",
+      "type": "ui_text",
+      "z": "cd0ce323.3bdcd",
+      "group": "82ae8100.77a39",
+      "order": 2,
+      "width": 0,
+      "height": 0,
+      "name": "",
+      "label": "Temperature",
+      "format": "{{msg.payload}}",
+      "layout": "row-spread",
+      "x": 530,
+      "y": 140,
+      "wires": []
+    },
+    {
+      "id": "c53ea618.79a048",
+      "type": "inject",
+      "z": "cd0ce323.3bdcd",
+      "name": "Click to reset UIs",
+      "topic": "",
+      "payload": "",
+      "payloadType": "str",
+      "repeat": "",
+      "crontab": "",
+      "once": false,
+      "onceDelay": 0.1,
+      "x": 140,
+      "y": 240,
+      "wires": [
+        [
+          "3dc4b62e.f4245a",
+          "392b047d.eab85c",
+          "4682ca2e.d35714",
+          "69d9e86d.3fe038"
+        ]
+      ]
+    },
+    {
+      "id": "e2adbaf0.a1e548",
+      "type": "function",
+      "z": "cd0ce323.3bdcd",
+      "name": "",
+      "func": "msg.payload =\"It's too hot and moist!\";\nreturn msg;",
+      "outputs": 1,
+      "noerr": 0,
+      "x": 230,
+      "y": 280,
+      "wires": [
+        [
+          "3dc4b62e.f4245a"
+        ]
+      ]
+    },
+    {
+      "id": "4682ca2e.d35714",
+      "type": "ui_text",
+      "z": "cd0ce323.3bdcd",
+      "group": "82ae8100.77a39",
+      "order": 3,
+      "width": 0,
+      "height": 0,
+      "name": "",
+      "label": "Humidity",
+      "format": "{{msg.payload}}",
+      "layout": "row-spread",
+      "x": 520,
+      "y": 180,
+      "wires": []
+    },
+    {
+      "id": "3dc4b62e.f4245a",
+      "type": "ui_text",
+      "z": "cd0ce323.3bdcd",
+      "group": "229c5759.b1c398",
+      "order": 1,
+      "width": 0,
+      "height": 0,
+      "name": "",
+      "label": "Condition change",
+      "format": "{{msg.payload}}",
+      "layout": "row-spread",
+      "x": 450,
+      "y": 280,
+      "wires": []
+    },
+    {
+      "id": "392b047d.eab85c",
+      "type": "ui_text",
+      "z": "cd0ce323.3bdcd",
+      "group": "229c5759.b1c398",
+      "order": 0,
+      "width": 0,
+      "height": 0,
+      "name": "",
+      "label": "IMEI change",
+      "format": "{{msg.payload}}",
+      "layout": "row-spread",
+      "x": 430,
+      "y": 320,
+      "wires": []
+    },
+    {
+      "id": "b3ea66b5.4cd418",
+      "type": "function",
+      "z": "cd0ce323.3bdcd",
+      "name": "",
+      "func": "msg.payload= \"Sim-kortti siirretty!\"\nreturn msg;",
+      "outputs": 1,
+      "noerr": 0,
+      "x": 230,
+      "y": 320,
+      "wires": [
+        [
+          "392b047d.eab85c"
+        ]
+      ]
+    },
+    {
+      "id": "35180e9a.5be3b2",
+      "type": "comment",
+      "z": "cd0ce323.3bdcd",
+      "name": "Visualization: http://{domain}.mybluemix.net/ui (open for more information)",
+      "info": "There are two tabs:\n    -sensor payload\n    -alerts",
+      "x": 320,
+      "y": 60,
+      "wires": []
+    },
+    {
+      "id": "84b40e03.83fe3",
+      "type": "link in",
+      "z": "cd0ce323.3bdcd",
+      "name": "Cloud rule",
+      "links": [
+        "7c372253.5fc74c"
+      ],
+      "x": 135,
+      "y": 280,
+      "wires": [
+        [
+          "e2adbaf0.a1e548"
+        ]
+      ]
+    },
+    {
+      "id": "4786d00a.01983",
+      "type": "link in",
+      "z": "cd0ce323.3bdcd",
+      "name": "JasperRule_SIM",
+      "links": [
+        "ba5a2064.ed595"
+      ],
+      "x": 135,
+      "y": 320,
+      "wires": [
+        [
+          "b3ea66b5.4cd418"
+        ]
+      ]
+    },
+    {
+      "id": "b9e500ac.050b1",
+      "type": "ibmiot out",
+      "z": "8996c3c2.f611",
+      "authentication": "apiKey",
+      "apiKey": "",
+      "outputType": "cmd",
+      "deviceId": "sensortagId001",
+      "deviceType": "sensortagType",
+      "eventCommandType": "command1",
+      "format": "json",
+      "data": "{}",
+      "qos": 0,
+      "name": "IBM IoT. CONFIGURE",
+      "service": "registered",
+      "x": 560,
+      "y": 100,
+      "wires": []
+    },
+    {
+      "id": "39eb5fdb.eb0db",
+      "type": "inject",
+      "z": "8996c3c2.f611",
+      "name": "Click to send data",
+      "topic": "",
+      "payload": "",
+      "payloadType": "date",
+      "repeat": "",
+      "crontab": "",
+      "once": false,
+      "onceDelay": 0.1,
+      "x": 170,
+      "y": 100,
+      "wires": [
+        [
+          "f50882ab.2df84"
+        ]
+      ]
+    },
+    {
+      "id": "86173ff4.fd202",
+      "type": "comment",
+      "z": "8996c3c2.f611",
+      "name": "Extra: Send message to your device via MQTT (double click this node for information)",
+      "info": "You need credentials in order to authenticate for IBM IoT Platform \nIf you dont have API key and token, you can generate new ones:\n1) Launch IBM Watson IoT Platform\n2) Click APPS in the menu on the left\n3) Generate API Key",
+      "x": 360,
+      "y": 60,
+      "wires": []
+    },
+    {
+      "id": "f90d96d3.9930c8",
+      "type": "http request",
+      "z": "8996c3c2.f611",
+      "name": "",
+      "method": "GET",
+      "ret": "txt",
+      "url": "",
+      "tls": "",
+      "x": 450,
+      "y": 220,
+      "wires": [
+        [
+          "413d6e3d.68ead"
+        ]
+      ]
+    },
+    {
+      "id": "500f238c.fb20ec",
+      "type": "function",
+      "z": "8996c3c2.f611",
+      "name": "CONFIGURE",
+      "func": "orgId = \"8wywfk\";\n\ntype = \"sensortagType\";\ndevId =\"sensortagId001\";\nevent1 = \"event\";\nmsg.headers = {'Content-Type': 'application/json'};\nmsg.url = \"https://\"+orgId+\".internetofthings.ibmcloud.com/api/v0002/device/types/\"+type+\"/devices/\"+devId+\"/events/\" +event1;",
+      "outputs": 1,
+      "noerr": 0,
+      "x": 290,
+      "y": 220,
+      "wires": [
+        [
+          "f90d96d3.9930c8"
+        ]
+      ]
+    },
+    {
+      "id": "413d6e3d.68ead",
+      "type": "json",
+      "z": "8996c3c2.f611",
+      "name": "",
+      "property": "payload",
+      "action": "",
+      "pretty": false,
+      "x": 150,
+      "y": 260,
+      "wires": [
+        [
+          "61bcff27.8fd9d"
+        ]
+      ]
+    },
+    {
+      "id": "61bcff27.8fd9d",
+      "type": "base64",
+      "z": "8996c3c2.f611",
+      "name": "",
+      "action": "b64",
+      "property": "payload.payload",
+      "x": 280,
+      "y": 260,
+      "wires": [
+        [
+          "270173f6.a9f78c"
+        ]
+      ]
+    },
+    {
+      "id": "270173f6.a9f78c",
+      "type": "json",
+      "z": "8996c3c2.f611",
+      "name": "",
+      "property": "payload.payload",
+      "action": "",
+      "pretty": false,
+      "x": 430,
+      "y": 260,
+      "wires": [
+        [
+          "8bab21f.63353e"
+        ]
+      ]
+    },
+    {
+      "id": "60b4a534.b2c78c",
+      "type": "comment",
+      "z": "8996c3c2.f611",
+      "name": "Extra: Get sensor values from Watson IoT Platform",
+      "info": "",
+      "x": 250,
+      "y": 180,
+      "wires": []
+    },
+    {
+      "id": "d05765ad.e68998",
+      "type": "inject",
+      "z": "8996c3c2.f611",
+      "name": "",
+      "topic": "",
+      "payload": "",
+      "payloadType": "date",
+      "repeat": "",
+      "crontab": "",
+      "once": false,
+      "onceDelay": 0.1,
+      "x": 140,
+      "y": 220,
+      "wires": [
+        [
+          "500f238c.fb20ec"
+        ]
+      ]
+    },
+    {
+      "id": "8bab21f.63353e",
+      "type": "function",
+      "z": "8996c3c2.f611",
+      "name": "",
+      "func": "temp = msg.payload.payload.d.temperature;\nhumi = msg.payload.payload.d.humidity;\ntxt = \"Lämpötila on \"+temp+\"astetta ja kosteus on \"+ humi+\" prosenttia.\";\n\nmsg.payload = msg.orig;\nmsg.payload.output.text = [txt];\nreturn msg;",
+      "outputs": 1,
+      "noerr": 0,
+      "x": 570,
+      "y": 260,
+      "wires": [
+        [
+          "85b50c0d.2db28"
+        ]
+      ]
+    },
+    {
+      "id": "85b50c0d.2db28",
+      "type": "debug",
+      "z": "8996c3c2.f611",
+      "name": "",
+      "active": true,
+      "tosidebar": true,
+      "console": false,
+      "tostatus": false,
+      "complete": "true",
+      "x": 710,
+      "y": 260,
+      "wires": []
+    },
+    {
+      "id": "13555de1.06c172",
+      "type": "ibmiot in",
+      "z": "cd0ce323.3bdcd",
+      "authentication": "apiKey",
+      "apiKey": "",
+      "inputType": "evt",
+      "logicalInterface": "",
+      "ruleId": "",
+      "deviceId": "",
+      "applicationId": "",
+      "deviceType": "+",
+      "eventType": "+",
+      "commandType": "",
+      "format": "json",
+      "name": "IBM IoT",
+      "service": "registered",
+      "allDevices": true,
+      "allApplications": "",
+      "allDeviceTypes": true,
+      "allLogicalInterfaces": "",
+      "allEvents": true,
+      "allCommands": "",
+      "allFormats": "",
+      "qos": 0,
+      "x": 160,
+      "y": 160,
+      "wires": [
+        [
+          "d040d00e.7273",
+          "ea000e23.bc59a",
+          "e526d1f1.72a67"
+        ]
+      ]
+    },
+    {
+      "id": "d040d00e.7273",
+      "type": "function",
+      "z": "cd0ce323.3bdcd",
+      "name": "real-time",
+      "func": "msg.payload = msg.payload.d.temperature;\nreturn msg;",
+      "outputs": 1,
+      "noerr": 0,
+      "x": 330,
+      "y": 160,
+      "wires": [
+        [
+          "69d9e86d.3fe038"
+        ]
+      ]
+    },
+    {
+      "id": "f50882ab.2df84",
+      "type": "function",
+      "z": "8996c3c2.f611",
+      "name": "",
+      "func": "msg.payload = {message:\"Hello world!\"};\nreturn msg;",
+      "outputs": 1,
+      "noerr": 0,
+      "x": 330,
+      "y": 100,
+      "wires": [
+        [
+          "b9e500ac.050b1"
+        ]
+      ]
+    },
+    {
+      "id": "ea000e23.bc59a",
+      "type": "debug",
+      "z": "cd0ce323.3bdcd",
+      "name": "",
+      "active": true,
+      "tosidebar": true,
+      "console": false,
+      "tostatus": false,
+      "complete": "false",
+      "x": 330,
+      "y": 120,
+      "wires": []
+    },
+    {
+      "id": "e526d1f1.72a67",
+      "type": "function",
+      "z": "cd0ce323.3bdcd",
+      "name": "real-time",
+      "func": "msg.payload = msg.payload.d.humidity;\nreturn msg;",
+      "outputs": 1,
+      "noerr": 0,
+      "x": 331,
+      "y": 194,
+      "wires": [
+        [
+          "4682ca2e.d35714"
+        ]
+      ]
+    },
+    {
+      "id": "db1e2af2.b7dfa8",
+      "type": "http in",
+      "z": "8996c3c2.f611",
+      "name": "",
+      "url": "/chat",
+      "method": "post",
+      "upload": false,
+      "swaggerDoc": "",
+      "x": 130,
+      "y": 380,
+      "wires": [
+        [
+          "d41db0a8.c88f1"
+        ]
+      ]
+    },
+    {
+      "id": "d41db0a8.c88f1",
+      "type": "function",
+      "z": "8996c3c2.f611",
+      "name": "",
+      "func": "msg.payload=msg.req.body.input;\n\nreturn msg;",
+      "outputs": 1,
+      "noerr": 0,
+      "x": 270,
+      "y": 380,
+      "wires": [
+        [
+          "f21aea13.0f6ac8"
+        ]
+      ]
+    },
+    {
+      "id": "f21aea13.0f6ac8",
+      "type": "json",
+      "z": "8996c3c2.f611",
+      "name": "",
+      "pretty": false,
+      "x": 390,
+      "y": 380,
+      "wires": [
+        [
+          "50a86162.0e16"
+        ]
+      ]
+    },
+    {
+      "id": "50a86162.0e16",
+      "type": "watson-conversation-v1",
+      "z": "8996c3c2.f611",
+      "name": "",
+      "workspaceid": "",
+      "multiuser": false,
+      "context": true,
+      "empty-payload": false,
+      "default-endpoint": false,
+      "service-endpoint": "",
+      "timeout": "",
+      "optout-learning": false,
+      "x": 520,
+      "y": 380,
+      "wires": [
+        [
+          "3e6e8dc7.f55842"
+        ]
+      ]
+    },
+    {
+      "id": "ac02e499.f64438",
+      "type": "http response",
+      "z": "8996c3c2.f611",
+      "name": "",
+      "statusCode": "",
+      "headers": {},
+      "x": 930,
+      "y": 400,
+      "wires": []
+    },
+    {
+      "id": "7bcf17b4.6112e8",
+      "type": "switch",
+      "z": "8996c3c2.f611",
+      "name": "",
+      "property": "payload.output.text",
+      "propertyType": "msg",
+      "rules": [
+        {
+          "t": "cont",
+          "v": "OUT-Sensori",
+          "vt": "str"
+        },
+        {
+          "t": "else"
+        }
+      ],
+      "checkall": "true",
+      "repair": false,
+      "outputs": 2,
+      "x": 770,
+      "y": 380,
+      "wires": [
+        [
+          "dcd985e0.7b8698"
+        ],
+        [
+          "ac02e499.f64438"
+        ]
+      ]
+    },
+    {
+      "id": "dcd985e0.7b8698",
+      "type": "link out",
+      "z": "8996c3c2.f611",
+      "name": "sensori",
+      "links": [
+        "d09f4b87.1c55b8",
+        "5b8b853e.ac50dc"
+      ],
+      "x": 895,
+      "y": 360,
+      "wires": []
+    },
+    {
+      "id": "3e6e8dc7.f55842",
+      "type": "function",
+      "z": "8996c3c2.f611",
+      "name": "",
+      "func": "msg.orig = msg.payload;\nreturn msg;",
+      "outputs": 1,
+      "noerr": 0,
+      "x": 650,
+      "y": 380,
+      "wires": [
+        [
+          "7bcf17b4.6112e8"
+        ]
+      ]
+    },
+    {
+      "id": "bf95d643.bac428",
+      "type": "comment",
+      "z": "8996c3c2.f611",
+      "name": "Future develpment placeholder for Watson Assistant",
+      "info": "",
+      "x": 250,
+      "y": 340,
+      "wires": []
+    }
+  ]
+}

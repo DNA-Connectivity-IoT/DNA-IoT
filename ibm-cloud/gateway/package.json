@@ -1,0 +1,10 @@
+{
+    "name": "node-red-project",
+    "description": "A Node-RED Project",
+    "version": "0.0.1",
+    "dependencies": {
+        "node-red-contrib-ibm-watson-iot": "^0.2.8",
+        "node-red-dashboard": "~2.9.1",
+        "node-red-node-sensortag": "0.0.19"
+    }
+}
